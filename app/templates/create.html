@@ -1,0 +1,252 @@
+{% extends "main.html" %}
+{% block title %}Cadastro de Nota Fiscal{% endblock %}
+{% block ajax %}
+<style>
+    body {
+        font-family: 'Noto Sans JP', sans-serif;
+        background: linear-gradient(135deg, #f7f5f2, #e8e8e8);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    h1 {
+        text-align: center;
+        color: #2c3e50;
+        font-size: 28px;
+        margin-bottom: 20px;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    form {
+        background: linear-gradient(145deg, #ffffff, #f0f0f0);
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 0 6px 6px rgba(0, 0, 0, 0.05);
+        width: 480px;
+        border: 1px solid #e0e0e0;
+    }
+
+    table {
+        width: 100%;
+        border-spacing: 0;
+        border-collapse: collapse;
+    }
+
+    td {
+        padding: 10px 5px;
+        vertical-align: top;
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #dcdcdc;
+        border-radius: 8px;
+        font-size: 14px;
+        background-color: #f9f9f9;
+        transition: border-color 0.3s, background-color 0.3s, box-shadow 0.3s;
+    }
+
+    input:focus, textarea:focus {
+        border-color: #3498db;
+        background-color: #ffffff;
+        outline: none;
+        box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
+    }
+
+    textarea {
+        resize: none;
+    }
+
+    #submit, #clearbtn {
+        width: 48%;
+        padding: 12px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+    }
+
+    #submit {
+        background: linear-gradient(145deg, #3498db, #2980b9);
+        color: white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    #clearbtn {
+        background: linear-gradient(145deg, #e74c3c, #c0392b);
+        color: white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    #submit:hover {
+        background: linear-gradient(145deg, #2980b9, #3498db);
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    #clearbtn:hover {
+        background: linear-gradient(145deg, #c0392b, #e74c3c);
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    #success-message {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 20px 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        font-weight: bold;
+        z-index: 1000;
+    }
+
+    #success-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    #success-message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    form {
+        background-image: linear-gradient(to bottom right, #ffffff, #f7f5f2);
+    }
+
+    input, textarea {
+        font-family: 'Noto Sans JP', sans-serif;
+    }
+
+    h1 {
+        font-family: 'Noto Serif JP', serif;
+        font-weight: 700;
+    }
+
+    td:first-child {
+        font-weight: bold;
+        color: #2c3e50;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#telefone").inputmask("(99) 99999-9999");
+        $("#cnpj").inputmask("99.999.999/9999-99");
+        $("#valor").inputmask("currency", { prefix: "R$ ", groupSeparator: ".", radixPoint: ",", digits: 2 });
+
+        $("#form").on('submit', function (e) {
+            e.preventDefault();
+            $("#submit").val("Enviando...").prop("disabled", true);
+            $.ajax({
+                url: 'http://localhost:5000/createAction',
+                type: "POST",
+                dataType: 'json',
+                data: $(this).serialize(),
+                success: function (result) {
+                    $("#submit").val("Enviar").prop("disabled", false);
+                    $("#form").trigger("reset");
+                    localStorage.removeItem("formDraft");
+                    showTemporaryMessage(result['mensagem'], "success");
+                },
+                error: function (xhr, resp, text) {
+                    $("#submit").val("Enviar").prop("disabled", false);
+                    let errorMessage = xhr.responseJSON?.mensagem || "Erro desconhecido";
+                    showTemporaryMessage(errorMessage, "error");
+                }
+            });
+        });
+
+        $("#clearbtn").on('click', function () {
+            $("#form").trigger("reset");
+            localStorage.removeItem("formDraft");
+        });
+
+        function showTemporaryMessage(message, type) {
+            const messageBox = $("#success-message");
+            messageBox.removeClass("success error").addClass(type);
+            messageBox.text(message).fadeIn().delay(1500).fadeOut();
+        }
+    });
+</script>
+{% endblock %}
+{% block body %}
+<h1>Cadastro Nota Fiscal</h1>
+<form id="form" action="" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <table>
+        <tbody>
+            <tr>
+                <td>Número:</td>
+                <td>
+                    <input type="text" name="numero" value="" required pattern="\d+" title="Apenas números são permitidos" placeholder="Digite o número" />
+                </td>
+            </tr>
+            <tr>
+                <td>Comprador:</td>
+                <td>
+                    <input type="text" name="comprador" value="" required placeholder="Digite o nome do comprador" />
+                </td>
+            </tr>
+            <tr>
+                <td>CNPJ:</td>
+                <td>
+                    <input type="text" id="cnpj" name="cnpj" value="" required placeholder="Digite o CNPJ" />
+                </td>
+            </tr>
+            <tr>
+                <td>Endereço:</td>
+                <td>
+                    <input type="text" name="endereco" value="" required placeholder="Digite o endereço" />
+                </td>
+            </tr>
+            <tr>
+                <td>Telefone:</td>
+                <td>
+                    <input type="text" id="telefone" name="telefone" value="" required placeholder="(XX) XXXXX-XXXX" />
+                </td>
+            </tr>
+            <tr>
+                <td>Data:</td>
+                <td>
+                    <input type="date" name="data" value="" required title="Selecione uma data válida" />
+                </td>
+            </tr>
+            <tr>
+                <td>Valor:</td>
+                <td>
+                    <input type="text" id="valor" name="valor" value="" required placeholder="R$ 0,00" />
+                </td>
+            </tr>
+            <tr>
+                <td>Itens:</td>
+                <td>
+                    <textarea id="itens" name="itens" rows="4" required placeholder="Descreva os itens"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align: center;">
+                    <input id="submit" type="submit" value="Enviar" />
+                    <input id="clearbtn" type="button" value="Reset" />
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</form>
+<div id="success-message"></div>
+{% endblock %}
